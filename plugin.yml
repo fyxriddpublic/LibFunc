@@ -1,0 +1,4 @@
+﻿name: LibFunc
+main: com.fyxridd.lib.func.FuncPlugin
+version: 0.1.0
+depend: [LibCore, LibConfig, LibLang]
