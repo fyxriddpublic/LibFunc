@@ -6,7 +6,7 @@ import java.util.Map;
 
 import com.fyxridd.lib.core.api.UtilApi;
 import com.fyxridd.lib.func.api.annotation.FuncType.Type;
-import com.fyxridd.lib.func.api.format.FormatContext;
+import com.fyxridd.lib.func.format.FormatContext;
 import com.fyxridd.lib.func.manager.FuncManager.ParamElement;
 
 public class FormatContextImpl implements FormatContext{

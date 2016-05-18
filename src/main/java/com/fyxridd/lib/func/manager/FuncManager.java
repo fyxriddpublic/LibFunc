@@ -1,7 +1,6 @@
 package com.fyxridd.lib.func.manager;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +9,12 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.fyxridd.lib.core.api.MessageApi;
+import com.fyxridd.lib.core.api.event.PlayerChatEvent;
+import com.fyxridd.lib.core.api.fancymessage.FancyMessage;
+import com.fyxridd.lib.func.FuncPlugin;
+import com.fyxridd.lib.func.config.FuncConfig;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import com.fyxridd.lib.core.api.UtilApi;
@@ -22,8 +27,12 @@ import com.fyxridd.lib.func.api.annotation.Func;
 import com.fyxridd.lib.func.api.annotation.FuncType;
 import com.fyxridd.lib.func.api.annotation.FuncType.Type;
 import com.fyxridd.lib.func.api.annotation.Param;
-import com.fyxridd.lib.func.api.format.FormatContext;
-import com.fyxridd.lib.func.api.format.FormatContextConfig;
+import com.fyxridd.lib.func.format.FormatContextConfig;
+import org.bukkit.event.Event;
+import org.bukkit.event.EventException;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.plugin.EventExecutor;
 
 public class FuncManager {
     /**
@@ -85,6 +94,8 @@ public class FuncManager {
     
     private static final Pattern paramsPattern = Pattern.compile("\\{([\\?]?)([\\w]+)([\\+]?)\\}");
 
+    private FuncConfig config;
+
     //插件名 格式定义配置
     private Map<String, FormatContextConfig> formats = new HashMap<>();
     //插件名 功能类型 功能名 功能上下文
@@ -94,6 +105,24 @@ public class FuncManager {
         //注册日志上下文
         LogApi.register(LOG_TO_USER);
         LogApi.register(LOG_TO_PROGRAMMER);
+        //添加配置监听
+        ConfigApi.addListener(FuncPlugin.instance.pn, FuncConfig.class, new Setter<FuncConfig>() {
+            @Override
+            public void set(FuncConfig value) {
+                config = value;
+            }
+        });
+        //注册事件
+        {
+            //聊天事件
+            Bukkit.getPluginManager().registerEvent(PlayerChatEvent.class, FuncPlugin.instance, EventPriority.LOWEST, new EventExecutor() {
+                @Override
+                public void execute(Listener listener, Event e) throws EventException {
+                    PlayerChatEvent event = (PlayerChatEvent) e;
+                    if (checkOnFunc(event.getP(), event.getMsg())) event.setCancelled(true);
+                }
+            }, FuncPlugin.instance, true);
+        }
     }
 
     /**
@@ -112,12 +141,12 @@ public class FuncManager {
     }
     
     /**
-     * @see FuncApi#registerFunc(String, Class)
+     * @see FuncApi#registerFunc(String, Object)
      */
-    public void registerFunc(String plugin, Class<?> funcClass) {
+    public void registerFunc(String plugin, Object funcInstance) {
         try {
-            Object instance = funcClass.newInstance();
-            
+            Class<?> funcClass = funcInstance.getClass();
+
             Map<Type, Map<String, FuncContext>> m = handlers.get(plugin);
             if (m == null) {
                 m = new HashMap<>();
@@ -151,7 +180,7 @@ public class FuncManager {
                                 }
                             }
                         }
-                        funcMap.put(func.value(), new FuncContext(instance, method, posToParam));
+                        funcMap.put(func.value(), new FuncContext(funcInstance, method, posToParam));
                     }
                 }
             }
@@ -164,12 +193,53 @@ public class FuncManager {
     }
 
     /**
-     * 玩家触发功能时调用
-     * @param p 玩家
-     * @param type 类型
-     * @param plugin 插件
-     * @param func 功能名
-     * @param value 只包含变量的字符串,可为空字符串不为null
+     * @see FuncApi#checkOnFunc(Player, String)
+     */
+    public boolean checkOnFunc(Player p, String msg) {
+        if (msg == null) return false;
+
+        //Type
+        Type type;
+        int _symbolLength;
+        {
+            if (msg.startsWith(config.getCmdSymbol())) {
+                type = Type.CMD;
+                _symbolLength = config.getCmdSymbol().length();
+            }else if (msg.startsWith(config.getItemSymbol())) {
+                type = Type.ITEM;
+                _symbolLength = config.getItemSymbol().length();
+            }else if (msg.startsWith(config.getChatSymbol())) {
+                type = Type.CHAT;
+                _symbolLength = config.getChatSymbol().length();
+            }else return false;
+        }
+
+        //是功能调用
+
+        //功能格式错误
+        String[] _args = msg.substring(_symbolLength).split(" ", 3);
+        if (_args.length < 2) {
+            MessageApi.send(p, get(p.getName(), 10), true);
+            return true;
+        }
+
+        //plugin
+        String plugin = _args[0];
+
+        //func
+        String func = _args[1];
+
+        //value
+        String value = _args.length > 2?_args[2]:"";
+
+        //执行功能
+        onFunc(p, type, plugin, func, value);
+
+        return true;
+    }
+
+    /**
+     * @see FuncApi#onFunc(Player, Type, String, String, String)
      */
     public void onFunc(Player p, Type type, String plugin, String func, String value) {
         FormatContextConfig formatContextConfig = formats.get(plugin);
@@ -201,7 +271,7 @@ public class FuncManager {
             }
         }
     }
-    
+
     /**
      * 获取变量元素集合
      * 变量名在字符串中都以'{[?]变量名[+]}'的格式存在
@@ -220,5 +290,9 @@ public class FuncManager {
             }
         }
         return result;
+    }
+
+    private FancyMessage get(String player, int id, Object... args) {
+        return config.getLang().get(player, id, args);
     }
 }

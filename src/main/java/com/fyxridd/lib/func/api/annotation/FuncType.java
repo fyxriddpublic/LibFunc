@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FuncType {
-    public enum Type {
+    enum Type {
         CMD,
         CHAT,
         ITEM
