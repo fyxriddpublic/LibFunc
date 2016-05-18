@@ -215,19 +215,42 @@ public class FuncManager {
                 if (map3 != null) {
                     FuncContext funcContext = map3.get(func);
                     if (funcContext != null) {
-                        String[] ss = value.split(" ");
-                        Object[] args = new Object[funcContext.getMethod().getParameterTypes().length];
-                        args[0] = sender;
-                        //最后一个前
-                        for (int index=1;index<args.length-1;index++) args[index] = ss[index-1];
-                        //最后一个
-                        String last;
-                        if (funcContext.isLastOptional() && ss.length < args.length-1) last = "";
-                        else if (funcContext.isLastExtend()) last = UtilApi.combine(ss, " ", args.length-2, ss.length-1);
-                        else last = ss[args.length-2];
-                        args[args.length-1] = last;
+                        //传入变量列表
+                        String[] args = value.split(" ");
+                        //方法变量类型列表
+                        Class<?>[] parameterTypes = funcContext.getMethod().getParameterTypes();
+                        //没有第一个sender变量的字符串型方法变量列表
+                        String[] stringParameters = new String[parameterTypes.length-1];
+                        {
+                            //最后一个前
+                            for (int index=0;index<stringParameters.length-1;index++) stringParameters[index] = args[index];
+                            //最后一个
+                            String last;
+                            if (funcContext.isLastOptional() && args.length < stringParameters.length) last = "";
+                            else if (funcContext.isLastExtend()) last = UtilApi.combine(args, " ", stringParameters.length-1, args.length-1);
+                            else last = args[stringParameters.length-1];
+                            stringParameters[stringParameters.length-1] = last;
+                        }
+                        //类型转换
+                        Object[] objectParameters = new Object[stringParameters.length+1];
+                        {
+                            objectParameters[0] = sender;
+                            for (int index=0;index<stringParameters.length-1;index++) {
+                                Object result;
+                                Class<?> warpClass = UtilApi.wrap(parameterTypes[index]);
+                                if (warpClass == Boolean.class) result = Boolean.parseBoolean(stringParameters[index]);
+                                else if (warpClass == Byte.class) result = Byte.parseByte(stringParameters[index]);
+                                else if (warpClass == Short.class) result = Short.parseShort(stringParameters[index]);
+                                else if (warpClass == Integer.class) result = Integer.parseInt(stringParameters[index]);
+                                else if (warpClass == Long.class) result = Long.parseLong(stringParameters[index]);
+                                else if (warpClass == Float.class) result = Float.parseFloat(stringParameters[index]);
+                                else if (warpClass == Double.class) result = Double.parseDouble(stringParameters[index]);
+                                else result = stringParameters[index];
+                                objectParameters[index+1] = result;
+                            }
+                        }
                         //调用方法
-                        funcContext.getMethod().invoke(funcContext.getInstance(), args);
+                        funcContext.getMethod().invoke(funcContext.getInstance(), objectParameters);
                     }
                 }
             }

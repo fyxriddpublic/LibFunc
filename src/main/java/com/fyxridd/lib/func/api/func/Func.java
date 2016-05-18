@@ -7,6 +7,15 @@ import java.lang.annotation.Target;
 
 /**
  * 功能
+ * 方法变量类型允许:
+ * Boolean
+ * Byte
+ * Short
+ * Integer
+ * Long
+ * Float
+ * Double
+ * String (通用)
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
