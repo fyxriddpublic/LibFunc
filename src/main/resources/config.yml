@@ -2,32 +2,6 @@
 #类型: '/f '代表命令类型,'$'代表物品类型,'#'代表聊天类型
 #插件: 插件名(类似命名空间,给功能分组的)
 #功能: 程序自定义的功能名
-#变量: 格式'{[?]param[+]}'
-#  说明:
-#    ?代表此变量是可选的
-#    +代表此变量会延续到结尾
-#  注:
-#    如果变量包含?或+,则此变量必须放在最后面
-
-#功能名: 变量定义
-func:
-  #命令功能
-  cmds:
-    info: ""
-    kill: "{tar}"
-    seeMoney: "{tar}"
-    giveMoney: "{tar} {amount}"
-    takeMoney: "{tar} {amount}"
-    setLandName: "{land} {newName}"
-    setLandEnterTip: "{land} {newTip+}"
-    seeLand: "{?land}"
-    buy: "{id} {confirmPrice} {?amount}"
-    
-  #物品功能
-  items:
-
-  #聊天功能
-  chats:
 
 #################################
 #####         语言          #####

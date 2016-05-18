@@ -6,17 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 类型
+ * 延展
+ * (只能放在最后一个变量上)
  */
-@Target(ElementType.TYPE)
+@Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface FuncType {
-    enum Type {
-        CMD,
-        CHAT,
-        ITEM
-        ;
-    }
-    
-    Type value();
+public @interface Extend {
 }
