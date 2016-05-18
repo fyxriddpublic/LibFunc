@@ -8,7 +8,7 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import com.fyxridd.lib.core.api.config.convert.ConfigConvert.ConfigConverter;
 import com.fyxridd.lib.func.FuncPlugin;
-import com.fyxridd.lib.func.api.annotation.FuncType.Type;
+import com.fyxridd.lib.func.api.func.FuncType.Type;
 import com.fyxridd.lib.func.impl.FormatContextImpl;
 import com.fyxridd.lib.func.manager.FuncManager.ParamElement;
 

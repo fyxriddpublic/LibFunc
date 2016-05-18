@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.fyxridd.lib.core.api.CoreApi;
 import com.fyxridd.lib.core.api.MessageApi;
 import com.fyxridd.lib.core.api.event.PlayerChatEvent;
 import com.fyxridd.lib.core.api.fancymessage.FancyMessage;
@@ -23,10 +24,10 @@ import com.fyxridd.lib.core.api.log.Level;
 import com.fyxridd.lib.core.api.log.LogApi;
 import com.fyxridd.lib.core.config.ConfigManager.Setter;
 import com.fyxridd.lib.func.api.FuncApi;
-import com.fyxridd.lib.func.api.annotation.Func;
-import com.fyxridd.lib.func.api.annotation.FuncType;
-import com.fyxridd.lib.func.api.annotation.FuncType.Type;
-import com.fyxridd.lib.func.api.annotation.Param;
+import com.fyxridd.lib.func.api.func.Func;
+import com.fyxridd.lib.func.api.func.FuncType;
+import com.fyxridd.lib.func.api.func.FuncType.Type;
+import com.fyxridd.lib.func.api.func.Param;
 import com.fyxridd.lib.func.format.FormatContextConfig;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventException;
@@ -242,33 +243,30 @@ public class FuncManager {
      * @see FuncApi#onFunc(Player, Type, String, String, String)
      */
     public void onFunc(Player p, Type type, String plugin, String func, String value) {
-        FormatContextConfig formatContextConfig = formats.get(plugin);
-        if (formatContextConfig != null) {
-            //变量名 变量值
-            Map<String, String> params = formatContextConfig.getFormats().get(type, func, value);
-            //获取功能上下文
-            Map<Type, Map<String, FuncContext>> map2 = handlers.get(plugin);
-            if (map2 != null) {
-                Map<String, FuncContext> map3 = map2.get(type);
-                if (map3 != null) {
-                    FuncContext funcContext = map3.get(func);
-                    if (funcContext != null) {
-                        Object[] args = new Object[funcContext.getMethod().getParameterTypes().length];
-                        args[0] = p;
-                        for (int index=1;index<args.length;index++) {
-                            String paramName = funcContext.getPosToParam().get(index);
-                            String paramValue = params.get(paramName);
-                            args[index] = paramValue;
-                        }
-                        //调用方法
-                        try {
+        try {
+            FormatContextConfig formatContextConfig = formats.get(plugin);
+            if (formatContextConfig != null) {
+                //变量名 变量值
+                Map<String, String> params = formatContextConfig.getFormats().get(type, func, value);
+                //获取功能上下文
+                Map<Type, Map<String, FuncContext>> map2 = handlers.get(plugin);
+                if (map2 != null) {
+                    Map<String, FuncContext> map3 = map2.get(type);
+                    if (map3 != null) {
+                        FuncContext funcContext = map3.get(func);
+                        if (funcContext != null) {
+                            Object[] args = new Object[funcContext.getMethod().getParameterTypes().length];
+                            args[0] = p;
+                            for (int index=1;index<args.length;index++) args[index] = params.get(funcContext.getPosToParam().get(index));
+                            //调用方法
                             funcContext.getMethod().invoke(funcContext.getInstance(), args);
-                        } catch (Exception e) {
-                            e.printStackTrace();
                         }
                     }
                 }
             }
+        } catch (Exception e) {
+            MessageApi.send(p, get(p.getName(), 20), true);
+            CoreApi.debug(UtilApi.convertException(e));
         }
     }
 

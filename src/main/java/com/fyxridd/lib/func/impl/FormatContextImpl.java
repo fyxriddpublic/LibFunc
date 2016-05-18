@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fyxridd.lib.core.api.UtilApi;
-import com.fyxridd.lib.func.api.annotation.FuncType.Type;
+import com.fyxridd.lib.func.api.func.FuncType.Type;
 import com.fyxridd.lib.func.format.FormatContext;
 import com.fyxridd.lib.func.manager.FuncManager.ParamElement;
 

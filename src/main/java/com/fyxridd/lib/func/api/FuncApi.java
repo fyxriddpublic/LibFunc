@@ -1,7 +1,7 @@
 package com.fyxridd.lib.func.api;
 
 import com.fyxridd.lib.func.FuncPlugin;
-import com.fyxridd.lib.func.api.annotation.FuncType;
+import com.fyxridd.lib.func.api.func.FuncType;
 import org.bukkit.entity.Player;
 
 public class FuncApi {

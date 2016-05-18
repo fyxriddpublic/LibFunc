@@ -2,7 +2,7 @@ package com.fyxridd.lib.func.format;
 
 import java.util.Map;
 
-import com.fyxridd.lib.func.api.annotation.FuncType.Type;
+import com.fyxridd.lib.func.api.func.FuncType.Type;
 
 /**
  * 格式上下文
