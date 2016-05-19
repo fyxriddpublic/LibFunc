@@ -1,10 +1,17 @@
 package com.fyxridd.lib.func.api;
 
 import com.fyxridd.lib.func.FuncPlugin;
-import com.fyxridd.lib.func.api.func.FuncType;
 import org.bukkit.entity.Player;
 
 public class FuncApi {
+    /**
+     * 注册功能类型,实际是添加挂钩,即将指定的功能类型挂钩到指定的前缀上
+     * (注册时机不用太早,只需在具体的检测触发功能前注册即可)
+     */
+    public static void registerTypeHook(String type, String prefix) {
+        FuncPlugin.instance.getFuncManager().registerTypeHook(type, prefix);
+    }
+    
     /**
      * 注册功能
      * 同一个插件可注册多次,但对于同一类型,功能名不能重复
@@ -32,7 +39,7 @@ public class FuncApi {
      * @param func 功能名
      * @param value 只包含变量的字符串,可为空字符串不为null
      */
-    public static void onFunc(Player p, FuncType.Type type, String plugin, String func, String value) {
+    public static void onFunc(Player p, String type, String plugin, String func, String value) {
         FuncPlugin.instance.getFuncManager().onFunc(p, type, plugin, func, value);
     }
 }

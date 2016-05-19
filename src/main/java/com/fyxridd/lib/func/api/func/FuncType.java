@@ -11,12 +11,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FuncType {
-    enum Type {
-        CMD,
-        CHAT,
-        ITEM
-        ;
-    }
-    
-    Type value();
+    String value();
 }

@@ -14,9 +14,9 @@ import com.fyxridd.lib.func.api.FuncApi;
 import com.fyxridd.lib.func.api.func.Extend;
 import com.fyxridd.lib.func.api.func.Func;
 import com.fyxridd.lib.func.api.func.FuncType;
-import com.fyxridd.lib.func.api.func.FuncType.Type;
 import com.fyxridd.lib.func.api.func.Optional;
 import com.fyxridd.lib.func.config.FuncConfig;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -31,6 +31,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class FuncManager {
     /**
@@ -76,8 +77,11 @@ public class FuncManager {
     
     private FuncConfig config;
 
+    //功能类型 前缀
+    private Map<String, String> prefixHooks = new HashMap<>();
+    //有可能出现功能类型没有被挂钩前缀的情况
     //插件名 功能类型 功能名 功能上下文
-    private Map<String, Map<Type, Map<String, FuncContext>>> handlers = new HashMap<>();
+    private Map<String, Map<String, Map<String, FuncContext>>> handlers = new HashMap<>();
     
     public FuncManager() {
         //注册日志上下文
@@ -112,13 +116,20 @@ public class FuncManager {
     }
 
     /**
+     * @see FuncApi#registerTypeHook(String, String)
+     */
+    public void registerTypeHook(String type, String prefix) {
+        prefixHooks.put(type, prefix);
+    }
+    
+    /**
      * @see FuncApi#register(String, Object)
      */
     public void register(String plugin, Object funcInstance) {
         try {
             Class<?> funcClass = funcInstance.getClass();
 
-            Map<Type, Map<String, FuncContext>> m = handlers.get(plugin);
+            Map<String, Map<String, FuncContext>> m = handlers.get(plugin);
             if (m == null) {
                 m = new HashMap<>();
                 handlers.put(plugin, m);
@@ -164,19 +175,17 @@ public class FuncManager {
         if (msg == null) return false;
 
         //Type
-        Type type;
-        int _symbolLength;
+        String type = null;
+        int _symbolLength = 0;
         {
-            if (msg.startsWith(config.getCmdSymbol())) {
-                type = Type.CMD;
-                _symbolLength = config.getCmdSymbol().length();
-            }else if (msg.startsWith(config.getItemSymbol())) {
-                type = Type.ITEM;
-                _symbolLength = config.getItemSymbol().length();
-            }else if (msg.startsWith(config.getChatSymbol())) {
-                type = Type.CHAT;
-                _symbolLength = config.getChatSymbol().length();
-            }else return false;
+            for (Entry<String, String> entry:prefixHooks.entrySet()) {
+                if (msg.startsWith(entry.getValue())) {
+                    type = entry.getKey();
+                    _symbolLength = entry.getValue().length();
+                    break;
+                }
+            }
+            if (type == null) return false;
         }
 
         //是功能调用
@@ -204,12 +213,12 @@ public class FuncManager {
     }
 
     /**
-     * @see FuncApi#onFunc(Player, Type, String, String, String)
+     * @see FuncApi#onFunc(Player, String, String, String, String)
      */
-    public void onFunc(CommandSender sender, Type type, String plugin, String func, String value) {
+    public void onFunc(CommandSender sender, String type, String plugin, String func, String value) {
         try {
             //获取功能上下文
-            Map<Type, Map<String, FuncContext>> map2 = handlers.get(plugin);
+            Map<String, Map<String, FuncContext>> map2 = handlers.get(plugin);
             if (map2 != null) {
                 Map<String, FuncContext> map3 = map2.get(type);
                 if (map3 != null) {
