@@ -14,7 +14,7 @@ import com.fyxridd.lib.func.api.FuncApi;
 import com.fyxridd.lib.func.api.func.Extend;
 import com.fyxridd.lib.func.api.func.Func;
 import com.fyxridd.lib.func.api.func.FuncType;
-import com.fyxridd.lib.func.api.func.Optional;
+import com.fyxridd.lib.func.api.func.Default;
 import com.fyxridd.lib.func.config.FuncConfig;
 
 import org.bukkit.Bukkit;
@@ -44,14 +44,14 @@ public class FuncManager {
         private Method method;
 
         //最后一个变量是否可选
-        private boolean lastOptional;
+        private Default lastDefault;
         //最后一个变量是否延展
         private boolean lastExtend;
 
-        public FuncContext(Object instance, Method method, boolean lastOptional, boolean lastExtend) {
+        public FuncContext(Object instance, Method method, Default lastDefault, boolean lastExtend) {
             this.instance = instance;
             this.method = method;
-            this.lastOptional = lastOptional;
+            this.lastDefault = lastDefault;
             this.lastExtend = lastExtend;
         }
 
@@ -63,8 +63,8 @@ public class FuncManager {
             return method;
         }
 
-        public boolean isLastOptional() {
-            return lastOptional;
+        public Default getLastDefault() {
+            return lastDefault;
         }
 
         public boolean isLastExtend() {
@@ -148,16 +148,16 @@ public class FuncManager {
                 if (func != null) {
                     if (funcMap.containsKey(func.value())) throw new Exception("duplicate func name '"+func.value()+"'");//功能名重复
 
-                    boolean lastOptional = false;
+                    Default lastDefault = null;
                     boolean lastExtend = false;
 
                     Annotation[][] annotations = method.getParameterAnnotations();
                     for (Annotation a:annotations[annotations.length-1]) {
-                        if (a instanceof Optional) lastOptional = true;
+                        if (a instanceof Default) lastDefault = (Default) a;
                         else if (a instanceof Extend) lastExtend = true;
                     }
 
-                    funcMap.put(func.value(), new FuncContext(funcInstance, method, lastOptional, lastExtend));
+                    funcMap.put(func.value(), new FuncContext(funcInstance, method, lastDefault, lastExtend));
                 }
             }
         } catch (Exception e) {
@@ -193,7 +193,7 @@ public class FuncManager {
         //功能格式错误
         String[] _args = msg.substring(_symbolLength).split(" ", 3);
         if (_args.length < 2) {
-            MessageApi.sendGraceful(sender, get(sender instanceof Player?sender.getName():null, 10), true);
+            MessageApi.send(sender, get(sender instanceof Player?sender.getName():null, 10), true);
             return true;
         }
 
@@ -231,12 +231,15 @@ public class FuncManager {
                         //没有第一个sender变量的字符串型方法变量列表
                         String[] stringParameters = new String[parameterTypes.length-1];
                         {
+                            if (args.length < stringParameters.length-1) throw new Exception("lack arg");
                             //最后一个前
                             for (int index=0;index<stringParameters.length-1;index++) stringParameters[index] = args[index];
                             //最后一个
                             String last;
-                            if (funcContext.isLastOptional() && args.length < stringParameters.length) last = "";
-                            else if (funcContext.isLastExtend()) last = UtilApi.combine(args, " ", stringParameters.length-1, args.length-1);
+                            if (args.length == stringParameters.length-1) {
+                                if (funcContext.getLastDefault() != null) last = funcContext.getLastDefault().value();
+                                else throw new Exception("lack arg");
+                            }else if (funcContext.isLastExtend()) last = UtilApi.combine(args, " ", stringParameters.length-1, args.length-1);
                             else last = args[stringParameters.length-1];
                             stringParameters[stringParameters.length-1] = last;
                         }
@@ -264,7 +267,7 @@ public class FuncManager {
                 }
             }
         } catch (Exception e) {
-            MessageApi.sendGraceful(sender, get(sender instanceof Player?sender.getName():null, 20), true);
+            MessageApi.send(sender, get(sender instanceof Player?sender.getName():null, 20), true);
             CoreApi.debug(UtilApi.convertException(e));
         }
     }
